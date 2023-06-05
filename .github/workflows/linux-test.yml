@@ -26,8 +26,10 @@ jobs:
         os: ['ubuntu-latest', 'ubuntu-20.04']
         include:
           - os: 'ubuntu-latest'
+            test: 'true'
             test_packages: libgcc-s1:i386 libstdc++6:i386 libgdk-pixbuf-2.0-dev:i386 libgdk-pixbuf2.0-dev:i386
           - os: 'ubuntu-20.04'
+            test: 'true'
             test_packages: gir1.2-gtk-3.0:i386 libgdk-pixbuf2.0-dev:i386 libgtk-3-0:i386 gir1.2-rsvg-2.0:i386
     runs-on: ${{matrix.os}}
 
@@ -55,6 +57,10 @@ jobs:
           gcc --version
           sudo dpkg --add-architecture i386 
           sudo apt update
+          if [[ ${{matrix.test}} == "true" ]] ; then
+            echo install test packages for debugging
+            sudo apt install -y ${{matrix.test_packages}};
+          fi
           echo install 32-bit dependences ...
           sudo apt install -y --allow-downgrades \
             libwebkit2gtk-4.0-dev:i386 \
