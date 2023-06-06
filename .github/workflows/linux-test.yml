@@ -23,13 +23,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest', 'ubuntu-20.04']
+        os: ['ubuntu-22.04', 'ubuntu-20.04']
         include:
-          - os: 'ubuntu-latest'
-            test: 'true'
+          - os: 'ubuntu-22.04'
+            test: 'false'
             test_packages: libatomic1:i386 gcc-11-base:i386 libgcc-s1:i386 libstdc++6:i386 libgdk-pixbuf-2.0-dev:i386 libgdk-pixbuf2.0-dev:i386
           - os: 'ubuntu-20.04'
-            test: 'true'
+            test: 'false'
             test_packages: libatk1.0-0:i386 libgirepository-1.0-1:i386 libglib2.0-0:i386 libglib2.0-0:i386 gir1.2-pango-1.0:i386 librsvg2-2:i386 libgdk-pixbuf2.0-0:i386 gir1.2-gdkpixbuf-2.0:i386 libglib2.0-dev:i386 libatk-bridge2.0-0:i386 libatk1.0-0:i386 libcairo-gobject2:i386 libcolord2:i386 libgdk-pixbuf2.0-0:i386 libglib2.0-0:i386 libharfbuzz0b:i386 libjson-glib-1.0-0:i386 libpango-1.0-0:i386 libpangocairo-1.0-0:i386 libpangoft2-1.0-0:i386 librest-0.7-0:i386 libmount1:i386 libselinux1:i386 libselinux1-dev:i386 libpcre2-8-0:i386
     runs-on: ${{matrix.os}}
 
@@ -55,18 +55,31 @@ jobs:
       - name: Test install tauri prerequisites
         run: |
           gcc --version
+          echo inspect ppa info
+          cat /etc/apt/sources.list
+          if [[ -d /etc/apt/sources.list.d ]] ; then
+            ls -l /etc/apt/sources.list.d;
+            cat /etc/apt/sources.list.d/* | true;
+          fi
           sudo dpkg --add-architecture i386 
           sudo apt update
           if [[ ${{matrix.test}} == "true" ]] ; then
-            echo install test packages for debugging
+            echo install test packages for debugging;
             sudo apt install -y ${{matrix.test_packages}};
           fi
           echo install 32-bit dependences ...
-          sudo apt install -y --allow-downgrades \
-            libwebkit2gtk-4.0-dev:i386 \
-            libssl-dev:i386 \
-            libgtk-3-dev:i386 \
-            librsvg2-dev:i386 
+          # sudo apt install -y --allow-downgrades \
+          #   libwebkit2gtk-4.0-dev:i386 \
+          #   libssl-dev:i386 \
+          #   libgtk-3-dev:i386 \
+          #   librsvg2-dev:i386 | echo "install 32-bit dependences failed!"
+          # install one by one to found problems
+          for package in libwebkit2gtk-4.0-dev:i386 libssl-dev:i386 librsvg2-dev:i386 libgtk-3-dev:i386 ; do 
+            echo trying to install $package; 
+            sudo apt install -y $package;
+          done
+          sudo apt-get -f install
+          sudo dpkg --configure -a
           echo install multilib ...
           sudo apt install -y --allow-downgrades \
             gcc-multilib \
